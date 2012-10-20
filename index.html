@@ -5,13 +5,13 @@
 <script src="cm/lib/util/runmode.js"></script>
 <script src="cm/mode/rust/rust.js"></script>
 <meta charset="utf-8">
-<title>Rust, a super short presentation</title>
+<title>Rust, a bit of teasing</title>
 
 <!-- Your Slides -->
 <!-- One section is one slide -->
 <section>
     <!-- This is the first slide -->
-    <h1>Rust, a super short presentation</h1>
+    <h1>Rust, a bit of teasing</h1>
     <img class=center src="images/rust.svg" width=400px height=400px>
     <footer>Paul Adenot (@padenot), Nicolas Silva (@nicalsilva)</footer>
 </section>
@@ -19,10 +19,11 @@
 <section>
 <h3>Disclaimer</h3>
 <ul class=incremental>
-  <li> Rust is super cool, but is an ongoing effort, in beta.
+  <li> Rust is super cool, but is an ongoing effort, in beta
   <li> The syntax changes a lot, everything breaks each release
-  <li> We are C++ devs for Gecko, not Rust hacker, not even language hackers
+  <li> We are C++ devs for Gecko, not Rust hacker, not <em>even</em> language hackers
   <li> But we do like where Rust is going
+  <li> This talks shares several points <em>we</em> liked about Rust
 </ul>
 </section>
 
@@ -39,6 +40,8 @@
 
 <section>
 <h3> Rust, why? </h3>
+<p> To avoid this:</p>
+<img src="images/segfault.png" class=center>
 <ul class=incremental>
   <li> Fast (C++ like)
   <li> Safe (Memory safety)
@@ -58,12 +61,29 @@ fn main() {
     do task::spawn {
       let v = rand::Rng().shuffle([1, 2, 3]);
       for v.each |num| {
-          io::print(fmt!("%s says: '%d'\n", name, *num))
+        io::print(fmt!("%s says: '%d'\n", name, *num))
       }
     }
   }
-}
-  </pre>
+}</pre>
+  <ul class=incremental>
+    <li> Strong types, type inference. Default is const
+    <li> Macros, less footgun-prone than C's
+    <li> Feels functional
+    <li> Threads
+  </ul>
+</section>
+
+<section>
+<h3> What we are going to talk about</h3>
+<ul>
+  <li> Memory model and pointers
+  <li> The object model
+  <li> Pattern matching features
+  <li> Functional programming features
+  <li> Concurrency
+  <li> Rust vs. Go
+</ul>
 </section>
 
 <section>
@@ -71,8 +91,8 @@ fn main() {
 <ul class=incremental>
   <li> Three types of pointers
   <ul>
-    <li> <code>@T</code> : Shared pointer, Task Heap (managed, cannot be sent accross tasks) </li>
-    <li> <code>~T</code> : Unique pointer, Exchange Heap (can be sent accros tasks, exclusive ownership) </li>
+    <li> <code>@T</code> : Shared pointer, Task Heap (managed, cannot be sent across tasks) </li>
+    <li> <code>~T</code> : Unique pointer, Exchange Heap (can be sent across tasks, exclusive ownership) </li>
     <li> <code>&amp;T</code> : Borrowed Pointer </li>
   </ul>
   <li> No <code>null</code>
@@ -84,17 +104,18 @@ fn main() {
 <h3> About pointer and memory: move and copy </h3>
 <pre class=code>
 fn main() {
-  let x = ~10; // unique pointer
-  let w = @30; // managed pointer
+  let x = ~10; // unique pointer, sendable
+  let w = @30; // managed pointer, not sendable
   let y = x; // warning, implicit copy
   let u = copy x; // ok
-  let v = move x; // ok
-  // let z = *x; // error, use of moved variable 
+  let v = move x; // ok, x is now uninitialized
+  // let z = *x; // error, use of moved variable
   let z = *v + *y;
-  assert z == 20;
-  assert *u == *v // no semicolon: return value
 }
 </pre>
+<img src="images/warning.png" class=center>
+<br>
+<img src="images/error.png" class=center>
 </section>
 
 <section>
@@ -106,15 +127,14 @@ fn compute_distance(p1: &point, p2: &point) -> float {
     let y_d = p1.y - p2.y;
     float::sqrt(x_d * x_d + y_d * y_d)
 }
-
 fn main() {
   let on_the_stack: point = point {x: 3.0, y: 4.0};
   let on_the_heap: @point = @point {x: 3.0, y: 4.0};
   compute_distance(&on_the_stack, on_the_heap);
-}
-</pre>
+}</pre>
 <ul class=incremental>
-  <li> Borrowed pointers are <em>always</em> valid
+  <li> Borrowed pointers are <em>always</em> valid: no null-check needed.
+  <li> Very strong checks at compile time: harder to write buggy code.
 </ul>
 </section>
 
@@ -157,6 +177,32 @@ let (a, b) = get_tuple_of_two_ints();
 </section>
 
 <section>
+<pre class=code>
+fn main() {
+  let a = os::args();
+  if (a.len() != 2) {
+    io::println("Howdy, I need an argument.");
+    return;
+  }
+
+  // pattern matching
+  let number = int::from_str(a[1]);
+  if (number.is_some()) {
+    io::println(fmt!("%d", number.get()));
+    match number.get() {
+      0     => io::println("I got a 0."),
+      1 | 2 => io::println("I got 1 or 2."),
+      3..10 => io::println("Something from three to ten"),
+      _     => io::println("I got something else")
+    }
+  } else {
+    io::println("That was no number.");
+  }
+}
+</pre>
+</section>
+
+<section>
 <h3> Functionnal programming </h3>
 <ul>
   <li> First class functions
@@ -192,32 +238,6 @@ fn main() {
 </section>
 
 <section>
-<pre class=code>
-fn main() {
-  let a = os::args();
-  if (a.len() != 2) {
-    io::println("Howdy, I need an argument.");
-    return;
-  }
-
-  // pattern matching
-  let number = int::from_str(a[1]);
-  if (number.is_some()) {
-    io::println(fmt!("%d", number.get()));
-    match number.get() {
-      0     => io::println("I got a 0."),
-      1 | 2 => io::println("I got 1 or 2."),
-      3..10 => io::println("Something from three to ten"),
-      _     => io::println("I got something else")
-    }
-  } else {
-    io::println("That was no number.");
-  }
-}
-</pre>
-</section>
-
-<section>
 <h3> Concurrency </h3>
 <q>
   The designers of Rust designed the language from the ground up to support
@@ -228,7 +248,7 @@ fn main() {
 <ul class=incremental>
   <li> Lightweight threads, M:N model (<em>like</em> green threads)
   <li> Super cheap
-  <li> Message passing using channels, cannot share mutable state
+  <li> Message passing using channels, without copy
   <li> Transfer <em>owned</em> data using the <em>exchange heap</em>
   <li> "Tasks" have failure isolation and recovery (<code>fail</code> keyword, <em>à la Erlang</em>)
 </ul>
@@ -262,12 +282,13 @@ fn main() {
 <section>
 <h3> Rust vs. Go</h3>
 <ul>
-  <li> Go is mature
+  <li> Go is mature (Rust is in beta)
   <li> Go is simpler
-  <li> Go relies on a GC
-  <li> Go has duck typing
-  <li> Go offers weaker memory guarantees
-  <li> Go is rather for hightly scalable server software, not for concurrent client-side applications
+  <li> Go <em>relies</em> on a GC (Rust runtime is optional)
+  <li> Go has duck typing (Rust is statically and nominally typed)
+  <li> Go offers weaker memory guarantees (no dangling pointers or buffer
+  overflows in Rust)
+  <li> Go is rather for highly scalable server software, not for concurrent client-side applications
 </section>
 
 <section>
