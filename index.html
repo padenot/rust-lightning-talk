@@ -43,11 +43,12 @@
 <p> To avoid this:</p>
 <img src="images/segfault.png" class=center>
 <ul class=incremental>
-  <li> Fast (C++ like)
+  <li> Fast (<em>idiomatic</em> C++ like)
   <li> Safe (Memory safety)
-  <li> Concurrent (from the ground up, not hacked on)
+  <li> Concurrent (from the ground up, not hacked up)
   <li> Optional runtime (GC, etc.)
   <li> Interfaces to C (lots of libs)
+  <li> Debug / profiling using normal tools (<code>valgrind</code>, <code>gdb</code>, etc.)
   <li> Goal: replace C++ for Gecko (Firefox rendering engine)
 </ul>
 </section>
@@ -167,7 +168,7 @@ fn main() {
 <ul class=incremental>
   <li> Rust has Erlang-like pattern matching using <code>match</code>
   <li> One of the sexiest syntax ever
-  <li> Destructuring is an application of pattern matching
+  <li> Destructuring assignment is an application of pattern matching:
 </ul>
 <ul class=incremental>
 <pre class=code style="text-shadow: none; color: black;">
@@ -180,14 +181,14 @@ let (a, b) = get_tuple_of_two_ints();
 <pre class=code>
 fn main() {
   let a = os::args();
-  if (a.len() != 2) {
+  if a.len() != 2 {
     io::println("Howdy, I need an argument.");
     return;
   }
 
   // pattern matching
   let number = int::from_str(a[1]);
-  if (number.is_some()) {
+  if number.is_some() {
     io::println(fmt!("%d", number.get()));
     match number.get() {
       0     => io::println("I got a 0."),
@@ -1220,8 +1221,8 @@ background: linear-gradient(to right, rgba(30,87,153,0) 0%,rgba(30,87,153,0.8) 1
   }
 
   for (c of document.querySelectorAll(".code")) {
-        CodeMirror.runMode(c.textContent, "text/x-rustsrc", c);
-        c.className += " cm-s-default"
+    CodeMirror.runMode(c.textContent, "text/x-rustsrc", c);
+    c.className += " cm-s-default"
   }
 
 </script>
