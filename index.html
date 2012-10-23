@@ -13,7 +13,8 @@
     <!-- This is the first slide -->
     <h1>Rust, a bit of teasing</h1>
     <img class=center src="images/rust.svg" width=400px height=400px>
-    <footer>Paul Adenot (@padenot), Nicolas Silva (@nicalsilva)</footer>
+    <footer>Paul Adenot (<a href="http://twitter.com/padenot">@padenot</a>), Nicolas Silva (<a
+      href="http://twitter.com/nicalsilva">@nicalsilva</a>)</footer>
 </section>
 
 <section>
@@ -75,17 +76,17 @@ fn main() {
   </ul>
 </section>
 
-<section>
-<h3> What we are going to talk about</h3>
-<ul>
-  <li> Memory model and pointers
-  <li> The object model
-  <li> Pattern matching features
-  <li> Functional programming features
-  <li> Concurrency
-  <li> Rust vs. Go
-</ul>
-</section>
+<!--<section>-->
+<!--<h3> What we are going to talk about</h3>-->
+<!--<ul>-->
+  <!--<li> Memory model and pointers-->
+  <!--<li> The object model-->
+  <!--<li> Pattern matching features-->
+  <!--<li> Functional programming features-->
+  <!--<li> Concurrency-->
+  <!--<li> Rust vs. Go-->
+<!--</ul>-->
+<!--</section>-->
 
 <section>
 <h3> About pointers and memory </h3>
@@ -163,45 +164,45 @@ fn main() {
 </pre>
 </section>
 
-<section>
-<h3> Pattern matching </h3>
-<ul class=incremental>
-  <li> Rust has Erlang-like pattern matching using <code>match</code>
-  <li> One of the sexiest syntax ever
-  <li> Destructuring assignment is an application of pattern matching:
-</ul>
-<ul class=incremental>
-<pre class=code style="text-shadow: none; color: black;">
-let (a, b) = get_tuple_of_two_ints();
-</pre>
-</ul>
-</section>
+<!--<section>-->
+<!--<h3> Pattern matching </h3>-->
+<!--<ul class=incremental>-->
+  <!--<li> Rust has Erlang-like pattern matching using <code>match</code>-->
+  <!--<li> One of the sexiest syntax ever-->
+  <!--<li> Destructuring assignment is an application of pattern matching:-->
+<!--</ul>-->
+<!--<ul class=incremental>-->
+<!--<pre class=code style="text-shadow: none; color: black;">-->
+<!--let (a, b) = get_tuple_of_two_ints();-->
+<!--</pre>-->
+<!--</ul>-->
+<!--</section>-->
 
-<section>
-<pre class=code>
-fn main() {
-  let a = os::args();
-  if a.len() != 2 {
-    io::println("Howdy, I need an argument.");
-    return;
-  }
+<!--<section>-->
+<!--<pre class=code>-->
+<!--fn main() {-->
+  <!--let a = os::args();-->
+  <!--if a.len() != 2 {-->
+    <!--io::println("Howdy, I need an argument.");-->
+    <!--return;-->
+  <!--}-->
 
-  // pattern matching
-  let number = int::from_str(a[1]);
-  if number.is_some() {
-    io::println(fmt!("%d", number.get()));
-    match number.get() {
-      0     => io::println("I got a 0."),
-      1 | 2 => io::println("I got 1 or 2."),
-      3..10 => io::println("Something from three to ten"),
-      _     => io::println("I got something else")
-    }
-  } else {
-    io::println("That was no number.");
-  }
-}
-</pre>
-</section>
+  <!--// pattern matching-->
+  <!--let number = int::from_str(a[1]);-->
+  <!--if number.is_some() {-->
+    <!--io::println(fmt!("%d", number.get()));-->
+    <!--match number.get() {-->
+      <!--0     => io::println("I got a 0."),-->
+      <!--1 | 2 => io::println("I got 1 or 2."),-->
+      <!--3..10 => io::println("Something from three to ten"),-->
+      <!--_     => io::println("I got something else")-->
+    <!--}-->
+  <!--} else {-->
+    <!--io::println("That was no number.");-->
+  <!--}-->
+<!--}-->
+<!--</pre>-->
+<!--</section>-->
 
 <section>
 <h3> Functionnal programming </h3>
@@ -257,18 +258,19 @@ fn main() {
 
 <section>
 <pre class=code>
-fn main() {
-  // Spawn 10 trivial tasks
-  for int::range(0, 10) |num| {
-    do spawn {
-     io::print(fmt!("I am child number %d\n", num));
-    }
-  }
+use task::spawn;
+use pipes::stream;
 
-  // Create a vector of ports, one for each child task
+fn main() {
+  // Create a vector of ports from a function, one
+  // for each child task
   let ports = do vec::from_fn(3) |i| {
     let (chan, port) = stream();
-    do spawn { chan.send(i); }
+    do spawn { 
+      chan.send(i);
+      io::println(fmt!("id: %u", i))
+    }
+
     port
   };
 
@@ -276,8 +278,7 @@ fn main() {
   let result = ports.foldl(0, |accum, port|
                                  *accum + port.recv());
   io::println(fmt!("result %u", result));
-}
-</pre>
+}</pre>
 </section>
 
 <section>
